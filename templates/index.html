@@ -23,16 +23,22 @@
         <br>
 	    <h2>Tasks</h2>
         <div>
+            <!-- todos 테이블 전체 데이터 랜더링 -->
+            {% for todo in todos %}
             <div class="task">
-                <strike></strike>
+                <!-- todo.complated=True 또는 False 구분해서 표시 -->
+                {% if todo.completed %}
+                    <strike>{{ todo.task }}</strike>
+                {% else %}
+                    {{ todo.task }}
+                {% endif %}
                 <small>
-                    <a href="">Edit</a>
-                    <a href="">Delete</a>
+                    <a href="/edit">Edit</a>
+                    <a href="/delete/{{ todo.id }}">Delete</a>
                 </small>
             </div>
+            {% endfor %}
         </div>
-
     </main>
-     
 </body>
 </html>

@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Form, Request, Depends
+from fastapi import FastAPI, Form, Request, Depends, status
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -30,13 +31,19 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # localhost:8000/
 @app.get("/")
-async def home(request: Request):
-    # 비즈니스 로직 처리
-    data = 100
-    data2 = "fastapi 잘하고 싶다."
+async def home(request: Request, db_ss: Session = Depends(get_db)):
+    # db 객체 생성, 세션연결하기 <- 의존성 주임으로 처리
+    # 테이블 조회
+    todos = db_ss.query(models.Todo) \
+        .order_by(models.Todo.id.desc())
+    print(type(todos))
+    # db 조회한 결과를 출력함
+    # for todo in todos:
+    #     print(todo.id, todo.task, todo.completed)
+
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "todos": data, "data2": data2}
+        {"request": request, "todos": todos}
         )
 
 @app.post("/add")
@@ -51,12 +58,23 @@ async def add(request: Request, task: str = Form(...),
     db_ss.add(todo)
     # db에 실제 저장, commit
     db_ss.commit()
-    return task
+    # home 엔드포인함수로 제어권을 넘김
+    return RedirectResponse(url=app.url_path_for("home"), 
+                            status_code=status.HTTP_303_SEE_OTHER)
 
-    
-    # 결과를 html에 랜더링에서 리턴
+# 문제 : todo 1개 삭제
 
-    pass
+# todo 수정 페이지 처리
+@app.get("/edit")
+async def edit(request: Request):
+    # 요청 수정 처리
+    todos = 0
+
+    return templates.TemplateResponse(
+        "edit.html",
+        {"request": request, "todos": todos}
+        )
+
 
 # python main.py
 if __name__ == "__main__":
