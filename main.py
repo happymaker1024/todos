@@ -17,8 +17,9 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
-    except :
-        print("db연결 오류")
+    except Exception as e :
+        print(f"db연결 오류 {e}")
+        raise
     finally:
         db.close()
 
@@ -68,7 +69,7 @@ async def add(request: Request, task: str = Form(...),
 async def add(request: Request, todo_id: int, db_ss: Session = Depends(get_db)):
     todo = db_ss.query(models.Todo).filter(models.Todo.id == todo_id).first()
     db_ss.delete(todo)
-    db_ss.b.commit()
+    db_ss.commit()
     return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
 
 # todo 수정을 위한 조회
