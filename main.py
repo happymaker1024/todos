@@ -38,8 +38,8 @@ async def home(request: Request, db_ss: Session = Depends(get_db)):
         .order_by(models.Todo.id.desc())
     print(type(todos))
     # db 조회한 결과를 출력함
-    # for todo in todos:
-    #     print(todo.id, todo.task, todo.completed)
+    for todo in todos:
+        print(todo.id, todo.task, todo.completed)
 
     return templates.TemplateResponse(
         "index.html",
@@ -55,6 +55,7 @@ async def add(request: Request, task: str = Form(...),
     todo = models.Todo(task=task)
     # 의존성 주입에서 처리함 Depends(get_db) : 엔진객체생성, 세션연결
     # db 테이블에 task 저장하기
+    print(todo)
     db_ss.add(todo)
     # db에 실제 저장, commit
     db_ss.commit()
@@ -63,6 +64,12 @@ async def add(request: Request, task: str = Form(...),
                             status_code=status.HTTP_303_SEE_OTHER)
 
 # 문제 : todo 1개 삭제
+@app.get("/delete/{todo_id}")
+async def add(request: Request, todo_id: int, db: Session = Depends(get_db)):
+    todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    db.delete(todo)
+    db.commit()
+    return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
 
 # todo 수정 페이지 처리
 @app.get("/edit")
