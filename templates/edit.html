@@ -10,11 +10,15 @@
     <main>
         <a href="/"><p class="head_img"></p></a>
         <h4>나를 성장시키는 메모</h4>
+        <!-- {{ todo }} -->
         <br>
-        <form action="" method="post">
-            <textarea name="task" rows="5"></textarea>
-            <label for="completed">Done?</label>
-            <input type="checkbox" name="completed">
+        <form action="/edit/{{ todo.id }}" method="post">
+            <textarea name="task" rows="5">{{ todo.task }}</textarea>
+\            <label for="completed">Done?</label>
+            <input type="checkbox" name="completed" 
+            {% if todo.completed %}
+            checked
+            {% endif %}>
             <button type="submit">Save</button>
         </form>
     </main>

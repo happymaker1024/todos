@@ -38,8 +38,8 @@ async def home(request: Request, db_ss: Session = Depends(get_db)):
         .order_by(models.Todo.id.desc())
     print(type(todos))
     # db 조회한 결과를 출력함
-    for todo in todos:
-        print(todo.id, todo.task, todo.completed)
+    # for todo in todos:
+    #     print(todo.id, todo.task, todo.completed)
 
     return templates.TemplateResponse(
         "index.html",
@@ -65,22 +65,31 @@ async def add(request: Request, task: str = Form(...),
 
 # 문제 : todo 1개 삭제
 @app.get("/delete/{todo_id}")
-async def add(request: Request, todo_id: int, db: Session = Depends(get_db)):
-    todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
-    db.delete(todo)
-    db.commit()
+async def add(request: Request, todo_id: int, db_ss: Session = Depends(get_db)):
+    todo = db_ss.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    db_ss.delete(todo)
+    db_ss.b.commit()
     return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
 
-# todo 수정 페이지 처리
-@app.get("/edit")
-async def edit(request: Request):
+# todo 수정을 위한 조회
+@app.get("/edit/{todo_id}")
+async def edit(request: Request, todo_id: int , db_ss: Session = Depends(get_db)):
     # 요청 수정 처리
-    todos = 0
+    todo = db_ss.query(models.Todo).filter(models.Todo.id==todo_id).first()
+    print(todo.task)
 
     return templates.TemplateResponse(
         "edit.html",
-        {"request": request, "todos": todos}
+        {"request": request, "todo": todo}
         )
+# todo 업데이터 처리
+@app.post("/edit/{todo_id}")
+async def add(request: Request, todo_id: int, task: str = Form(...), completed: bool = Form(False), db: Session = Depends(get_db)):
+    todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    todo.task = task
+    todo.completed = completed
+    db.commit()
+    return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
 
 
 # python main.py
