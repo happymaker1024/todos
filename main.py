@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 import uvicorn
 from database import Base, SessionLocal, engine
 import models
@@ -35,16 +36,17 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def home(request: Request, db_ss: Session = Depends(get_db)):
     # db 객체 생성, 세션연결하기 <- 의존성 주임으로 처리
     # 테이블 조회
-    todos = db_ss.query(models.Todo) \
-        .order_by(models.Todo.id.desc())
+    todos = db_ss.query(models.Todo).order_by(models.Todo.id.desc()).all()
+    
     print(type(todos))
     # db 조회한 결과를 출력함
     # for todo in todos:
     #     print(todo.id, todo.task, todo.completed)
 
     return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "todos": todos}
+        request = request,
+        name = "index.html",
+        context={ "todos": todos}
         )
 
 @app.post("/add")
@@ -65,9 +67,13 @@ async def add(request: Request, task: str = Form(...),
                             status_code=status.HTTP_303_SEE_OTHER)
 
 # 문제 : todo 1개 삭제
-@app.get("/delete/{todo_id}")
-async def add(request: Request, todo_id: int, db_ss: Session = Depends(get_db)):
+@app.post("/delete/{todo_id}")
+async def delete(request: Request, todo_id: int, db_ss: Session = Depends(get_db)):
     todo = db_ss.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    print(todo)
+    if todo is None:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
     db_ss.delete(todo)
     db_ss.commit()
     return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
@@ -79,13 +85,18 @@ async def edit(request: Request, todo_id: int , db_ss: Session = Depends(get_db)
     todo = db_ss.query(models.Todo).filter(models.Todo.id==todo_id).first()
     print(todo.task)
 
+    if todo is None:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
     return templates.TemplateResponse(
-        "edit.html",
-        {"request": request, "todo": todo}
-        )
+        request=request,
+        name = "edit.html",
+        context = {"todo": todo}
+    )
+
 # todo 업데이터 처리
 @app.post("/edit/{todo_id}")
-async def add(request: Request, todo_id: int, task: str = Form(...), completed: bool = Form(False), db: Session = Depends(get_db)):
+async def update(request: Request, todo_id: int, task: str = Form(...), completed: bool = Form(False), db: Session = Depends(get_db)):
     todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
     todo.task = task
     todo.completed = completed

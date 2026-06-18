@@ -21,10 +21,13 @@
                 {% else %}
                     {{ todo.task }}
                 {% endif %}
-                <small>
-                    <a href="/edit/{{ todo.id }}">Edit</a>
-                    <a href="/delete/{{ todo.id }}">Delete</a>
-                </small>
+                <div class="task-actions">
+                    <a href="/edit/{{ todo.id }}" class="todo-btn">Edit</a>
+
+                    <form action="/delete/{{ todo.id }}" method="post">
+                        <button type="submit" class="todo-btn">Delete</button>
+                    </form>
+                </div>
             </div>
             {% endfor %}
         </div>
